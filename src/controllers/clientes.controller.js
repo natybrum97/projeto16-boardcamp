@@ -1,5 +1,6 @@
 import { db } from "../database/database.connection.js";
 import { stripHtml } from "string-strip-html";
+import { format } from 'date-fns';
 
 export async function listarClientes (req, res) {
 
@@ -18,7 +19,12 @@ export async function listarClientes (req, res) {
             listaClientes = await db.query(`SELECT * FROM customers;`)
           }
         
-        res.send(listaClientes.rows);
+          const clientesFormatados = listaClientes.rows.map(cliente => ({
+            ...cliente,
+            birthday: format(new Date(cliente.birthday), 'yyyy-MM-dd')
+        }));
+
+        res.send(clientesFormatados);
 
     } catch (err) {
         res.status(500).send(err.message);
@@ -35,7 +41,12 @@ export async function clientesPorID(req,res){
 
         if(cliente.rows.length === 0) return res.status(404).send({message:"Cliente não encontrado pelo id", id});
 
-        return res.status(200).send(cliente.rows[0]);
+        const clienteFormatado = {
+            ...cliente.rows[0],
+            birthday: format(new Date(cliente.rows[0].birthday), 'yyyy-MM-dd')
+        };
+        
+        return res.status(200).send(clienteFormatado);
 
     } catch (err) {
 
@@ -51,6 +62,8 @@ export async function inserirClientes(req, res) {
     const sanitizedPhone = stripHtml(phone).result.trim();
     const sanitizedcpf = stripHtml(cpf).result.trim();
     const sanitizedBirthday = stripHtml(birthday).result.trim();
+
+    console.log(sanitizedBirthday);
 
     try {
         const cpfRepetido = await db.query('SELECT * FROM customers WHERE cpf = $1;', [sanitizedcpf]);
