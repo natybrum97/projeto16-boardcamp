@@ -3,22 +3,42 @@ import { stripHtml } from "string-strip-html";
 
 export async function listarGames (req, res) {
 
-    const { name } = req.query;
+    const { name, order, desc } = req.query;
 
     try {
 
         let listaGames;
 
+        let query = 'SELECT * FROM games';
+
         if (name) {
-      
-            listaGames = await db.query('SELECT * FROM games WHERE name ILIKE $1', [`%${name}%`]);
+            query += ' WHERE name ILIKE $1';
+        }
 
-          } else {
-
-            listaGames = await db.query(`SELECT * FROM games;`)
-
+        if (order) {
+            query += ` ORDER BY ${order}`;
+          
+            if (desc === "true") {
+              query += ' DESC';
+            } else {
+              query += ' ASC';
+            }
           }
-        
+
+        if (limit) {
+            query += ` LIMIT ${parseInt(limit)}`;
+        }
+
+        if (offset) {
+            query += ` OFFSET ${parseInt(offset)}`;
+        }
+
+        if (name) {
+            listaClientes = await db.query(query, [`%${name}%`]);
+        } else {
+            listaClientes = await db.query(query);
+        }
+
         res.send(listaGames.rows);
 
     } catch (err) {
