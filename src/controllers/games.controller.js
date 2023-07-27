@@ -34,9 +34,9 @@ export async function listarGames (req, res) {
         }
 
         if (name) {
-            listaClientes = await db.query(query, [`%${name}%`]);
+            listaGames = await db.query(query, [`%${name}%`]);
         } else {
-            listaClientes = await db.query(query);
+            listaGames = await db.query(query);
         }
 
         res.send(listaGames.rows);
