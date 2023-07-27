@@ -16,7 +16,7 @@ export async function listarGames (req, res) {
         }
 
         if (order) {
-            query += ` ORDER BY ${order}`;
+            query += ` ORDER BY "${order}"`;
           
             if (desc === "true") {
               query += ' DESC';
