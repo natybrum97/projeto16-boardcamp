@@ -3,7 +3,7 @@ import { stripHtml } from "string-strip-html";
 
 export async function listarGames (req, res) {
 
-    const { name, order, desc } = req.query;
+    const { name, order, desc, limit, offset } = req.query;
 
     try {
 

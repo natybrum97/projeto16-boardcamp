@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 
 export async function listarClientes(req, res) {
 
-    const { cpf, order, desc } = req.query;
+    const { cpf, order, desc, limit, offset } = req.query;
 
     try {
 
