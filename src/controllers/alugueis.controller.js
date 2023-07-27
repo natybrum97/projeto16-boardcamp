@@ -54,3 +54,20 @@ export async function inserirAlugueis(req, res) {
         res.status(500).send(err.message);
     }
 }
+
+export async function deletaAluguel (req, res) {
+
+    const { id } = req.params;
+    
+    try {
+
+    const result = await db.query('DELETE FROM customers WHERE id = $1;', [id]);
+
+    if (result.rowCount === 0) return res.status(404).send("Esse aluguel não consta no sistema!");
+
+    res.status(200).send("Produto deletado com sucesso!");
+
+    } catch (err) {
+    res.status(500).send(err.message);
+    }
+    }
