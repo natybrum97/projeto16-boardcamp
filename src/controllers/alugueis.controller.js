@@ -55,19 +55,60 @@ export async function inserirAlugueis(req, res) {
     }
 }
 
-export async function deletaAluguel (req, res) {
+export async function listarAlugueis(req, res) {
 
-    const { id } = req.params;
-    
+
+
     try {
 
-    const result = await db.query('DELETE FROM customers WHERE id = $1;', [id]);
 
-    if (result.rowCount === 0) return res.status(404).send("Esse aluguel não consta no sistema!");
+        const listaAlugueis = await db.query(` SELECT rentals.id, rentals."customerId", rentals."gameId", rentals."rentDate", rentals."daysRented",
+        rentals."returnDate", rentals."originalPrice", rentals."delayFee", customers.id AS "customer.id", customers.name AS "customer.name",
+        games.id AS "game.id", games.name AS "game.name" FROM rentals
+        JOIN customers ON rentals."customerId" = customers.id
+        JOIN games ON rentals."gameId" = games.id;`);
 
-    res.status(200).send("Produto deletado com sucesso!");
+        const formattedResult = listaAlugueis.rows.map(item => ({
+            id: item.id,
+            customerId: item.customerId,
+            gameId: item.gameId,
+            rentDate: item.rentDate,
+            daysRented: item.daysRented,
+            returnDate: item.returnDate,
+            originalPrice: item.originalPrice,
+            delayFee: item.delayFee,
+            customer: {
+              id: item["customer.id"],
+              name: item["customer.name"]
+            },
+            game: {
+              id: item["game.id"],
+              name: item["game.name"]
+            }
+          }));
+
+        res.send(formattedResult);
 
     } catch (err) {
-    res.status(500).send(err.message);
+        res.status(500).send(err.message);
     }
+}
+
+
+export async function deletaAluguel(req, res) {
+
+    const { id } = req.params;
+
+    try {
+
+        const result = await db.query('DELETE FROM rentals WHERE id = $1;', [id]);
+
+        if (result.rowCount === 0) return res.status(404).send("Esse aluguel não consta no sistema!");
+
+        res.status(200).send("Produto deletado com sucesso!");
+
+    } catch (err) {
+        res.status(500).send(err.message);
     }
+}
+
