@@ -123,8 +123,6 @@ export async function finalizarAlugueis(req, res) {
     try {
         const idExiste = await db.query('SELECT * FROM rentals WHERE id = $1;', [id]);
 
-        console.log(idExiste);
-
         if (idExiste.rowCount === 0) return res.status(404).send("Aluguel não encontrado pelo id!");
 
         if (idExiste.rows[0].returnDate !== null) return res.status(400).send({ message: "Aluguel já finalizado" });
@@ -139,8 +137,9 @@ export async function finalizarAlugueis(req, res) {
         console.log(rentDate)
 
         console.log(diferencaEmDias)
+        console.log(idExiste.rows[0].originalPrice)
 
-        const multa = diferencaEmDias * (parseInt(idExiste.rows[0].originalPrice));
+        const multa = diferencaEmDias * (parseInt(idExiste.rows[0].originalPrice)/100);
 
         console.log(multa)
 
