@@ -121,36 +121,27 @@ export async function finalizarAlugueis(req, res) {
     const { id } = req.params;
 
     try {
-        const idExiste = await db.query('SELECT * FROM rentals WHERE id = $1;', [id]);
+        const aluguel = await db.query('SELECT * FROM rentals WHERE id = $1;', [id]);
 
-        if (idExiste.rowCount === 0) return res.status(404).send("Aluguel não encontrado pelo id!");
+        if (aluguel.rowCount === 0) return res.status(404).send("Aluguel não encontrado pelo ID!");
 
-        if (idExiste.rows[0].returnDate !== null) return res.status(400).send({ message: "Aluguel já finalizado" });
+        if (aluguel.rows[0].returnDate !== null) return res.status(400).send({ message: "Aluguel já finalizado" });
 
-        const rentDate = idExiste.rows[0].rentDate.toISOString().slice(0, 10);
+        const rentDate = new Date(aluguel.rows[0].rentDate);
+        const daysRented = aluguel.rows[0].daysRented;
 
-        const dataAtual = new Date().toISOString().slice(0, 10);
+        const dataAtual = new Date();
+        const diferencaEmDias = differenceInDays(dataAtual, rentDate);
 
-        const diferencaEmDias = differenceInDays(new Date(dataAtual), new Date(rentDate));
+        const atrasoEmDias = Math.max(diferencaEmDias - daysRented, 0);
+        const precoPorDia = aluguel.rows[0].originalPrice / daysRented;
+        const multa = atrasoEmDias * precoPorDia;
 
-        const menosDiasAlugados = diferencaEmDias - (parseInt(idExiste.rows[0].daysRented));
+        const updateQuery = `UPDATE rentals SET "returnDate" = $1, "delayFee" = $2 WHERE id = $3;`;
+        await db.query(updateQuery, [dataAtual, multa, id]);
 
-        const multa = menosDiasAlugados * (parseInt(idExiste.rows[0].originalPrice));
-
-        let query;
-
-        if(diferencaEmDias <= (parseInt(idExiste.rows[0].daysRented))){
-            
-            query = `UPDATE rentals SET "returnDate" = $1 WHERE id = $2;`;
-            await db.query(query, [dataAtual, id]);
-        } else {
-            query = `UPDATE rentals SET "returnDate" = $1, "delayFee" = $2 WHERE id = $3;`;
-            await db.query(query, [dataAtual, multa, id]);
-        }
-
-        res.status(200).send("Produto Entregue!!");
+        res.sendStatus(200);
     } catch (err) {
         res.status(500).send(err.message);
     }
 }
-
