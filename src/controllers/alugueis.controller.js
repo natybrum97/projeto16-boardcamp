@@ -57,17 +57,31 @@ export async function inserirAlugueis(req, res) {
 }
 
 export async function listarAlugueis(req, res) {
+    const { customerId, gameId } = req.query;
 
+    let query = `
+      SELECT rentals.id, rentals."customerId", rentals."gameId", rentals."rentDate", rentals."daysRented",
+        rentals."returnDate", rentals."originalPrice", rentals."delayFee", customers.id AS "customer.id", customers.name AS "customer.name",
+        games.id AS "game.id", games.name AS "game.name"
+      FROM rentals
+      JOIN customers ON rentals."customerId" = customers.id
+      JOIN games ON rentals."gameId" = games.id
+    `;
 
+    const values = [];
+
+    if (customerId) {
+        query += ` WHERE rentals."customerId" = $1`;
+        values.push(customerId);
+    }
+
+    if (gameId) {
+        query += `${customerId ? ' AND' : ' WHERE'} rentals."gameId" = $${values.length + 1}`;
+        values.push(gameId);
+    }
 
     try {
-
-
-        const listaAlugueis = await db.query(` SELECT rentals.id, rentals."customerId", rentals."gameId", rentals."rentDate", rentals."daysRented",
-        rentals."returnDate", rentals."originalPrice", rentals."delayFee", customers.id AS "customer.id", customers.name AS "customer.name",
-        games.id AS "game.id", games.name AS "game.name" FROM rentals
-        JOIN customers ON rentals."customerId" = customers.id
-        JOIN games ON rentals."gameId" = games.id;`);
+        const listaAlugueis = await db.query(query, values);
 
         const formattedResult = listaAlugueis.rows.map(item => ({
             id: item.id,
@@ -79,21 +93,21 @@ export async function listarAlugueis(req, res) {
             originalPrice: item.originalPrice,
             delayFee: item.delayFee,
             customer: {
-              id: item["customer.id"],
-              name: item["customer.name"]
+                id: item["customer.id"],
+                name: item["customer.name"]
             },
             game: {
-              id: item["game.id"],
-              name: item["game.name"]
+                id: item["game.id"],
+                name: item["game.name"]
             }
-          }));
+        }));
 
         res.send(formattedResult);
-
     } catch (err) {
         res.status(500).send(err.message);
     }
 }
+
 
 
 export async function deletaAluguel(req, res) {
