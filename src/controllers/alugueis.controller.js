@@ -1,5 +1,6 @@
 import { db } from "../database/database.connection.js";
 import { stripHtml } from "string-strip-html";
+import { format, differenceInDays } from 'date-fns';
 
 export async function inserirAlugueis(req, res) {
     const { customerId, gameId, daysRented } = req.body;
@@ -101,12 +102,53 @@ export async function deletaAluguel(req, res) {
 
     try {
 
-        const result = await db.query('DELETE FROM rentals WHERE id = $1;', [id]);
+        const result = await db.query('SELECT * FROM rentals WHERE id = $1;', [id]);
 
         if (result.rowCount === 0) return res.status(404).send("Esse aluguel não consta no sistema!");
 
+        if (result.rows[0].returnDate === null || undefined) return res.status(400).send({ message: "Aluguel não finalizado" });
+
+        const deletando = await db.query('DELETE FROM rentals WHERE id = $1;', [id]);
+
         res.status(200).send("Produto deletado com sucesso!");
 
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+}
+
+export async function finalizarAlugueis(req, res) {
+    const { id } = req.params;
+
+    try {
+        const idExiste = await db.query('SELECT * FROM rentals WHERE id = $1;', [id]);
+
+        console.log(idExiste);
+
+        if (idExiste.rowCount === 0) return res.status(404).send("Aluguel não encontrado pelo id!");
+
+        if (idExiste.rows[0].returnDate !== null) return res.status(400).send({ message: "Aluguel já finalizado" });
+
+        const rentDate = idExiste.rows[0].rentDate.toISOString().slice(0, 10);
+
+        const dataAtual = new Date().toISOString().slice(0, 10);
+
+        const diferencaEmDias = differenceInDays(new Date(dataAtual), new Date(rentDate));
+
+        console.log(dataAtual);
+        console.log(rentDate)
+
+        console.log(diferencaEmDias)
+
+        const multa = diferencaEmDias * (parseInt(idExiste.rows[0].originalPrice));
+
+        console.log(multa)
+
+
+        const query = `UPDATE rentals SET "returnDate" = $1, "delayFee" = $2 WHERE id = $3;`;
+        await db.query(query, [dataAtual, multa, id]);
+
+        res.status(200).send("Produto Entregue!!");
     } catch (err) {
         res.status(500).send(err.message);
     }
