@@ -57,7 +57,7 @@ export async function inserirAlugueis(req, res) {
 }
 
 export async function listarAlugueis(req, res) {
-    const { customerId, gameId } = req.query;
+    const { customerId, gameId, order, desc } = req.query;
 
     let query = `
       SELECT rentals.id, rentals."customerId", rentals."gameId", rentals."rentDate", rentals."daysRented",
@@ -81,14 +81,14 @@ export async function listarAlugueis(req, res) {
     }
 
     if (order) {
-        query += ` ORDER BY ${order}`;
-      
-        if (desc === "true") {
-          query += ' DESC';
-        } else {
-          query += ' ASC';
-        }
-      }
+            query += ` ORDER BY ${order}`;
+          
+            if (desc === "true") {
+              query += ' DESC';
+            } else {
+              query += ' ASC';
+            }
+          }
 
     try {
         const listaAlugueis = await db.query(query, values);
