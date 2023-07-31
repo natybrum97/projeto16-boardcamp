@@ -81,14 +81,16 @@ export async function listarAlugueis(req, res) {
     }
 
     if (order) {
-            query += ` ORDER BY ${order}`;
-          
-            if (desc === "true") {
-              query += ' DESC';
-            } else {
-              query += ' ASC';
-            }
-          }
+        if (order === 'name') {
+            query += ` ORDER BY games.name`;
+        } else {
+            // Se houver outras colunas para ordenação, adicione as condições aqui.
+        }
+    }
+
+    if (desc === 'true') {
+        query += ` DESC`;
+    }
 
     try {
         const listaAlugueis = await db.query(query, values);
