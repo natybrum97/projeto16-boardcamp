@@ -131,26 +131,22 @@ export async function finalizarAlugueis(req, res) {
 
         const dataAtual = new Date().toISOString().slice(0, 10);
 
-        // Verificar se o aluguel já foi finalizado
-        if (idExiste.rows[0].returnDate === null) {
-            return res.status(400).send({ message: "Aluguel ainda não foi finalizado" });
+        const diferencaEmDias = differenceInDays(new Date(dataAtual), new Date(rentDate));
+
+        const menosDiasAlugados = diferencaEmDias - (parseInt(idExiste.rows[0].daysRented));
+
+        const multa = menosDiasAlugados * (parseInt(idExiste.rows[0].originalPrice));
+
+        let query;
+
+        if(diferencaEmDias <= (parseInt(idExiste.rows[0].daysRented))){
+            
+            query = `UPDATE rentals SET "returnDate" = $1 WHERE id = $2;`;
+            await db.query(query, [dataAtual, id]);
+        } else {
+            query = `UPDATE rentals SET "returnDate" = $1, "delayFee" = $2 WHERE id = $3;`;
+            await db.query(query, [dataAtual, multa, id]);
         }
-
-        // Usar a data de retorno para calcular a diferença de dias
-        const returnDate = idExiste.rows[0].returnDate.toISOString().slice(0, 10);
-        const diferencaEmDias = differenceInDays(new Date(returnDate), new Date(rentDate));
-
-        console.log(dataAtual);
-        console.log(rentDate);
-        console.log(returnDate);
-        console.log(diferencaEmDias);
-
-        const multa = diferencaEmDias * parseInt(idExiste.rows[0].originalPrice);
-
-        console.log(multa);
-
-        const query = `UPDATE rentals SET "returnDate" = $1, "delayFee" = $2 WHERE id = $3;`;
-        await db.query(query, [dataAtual, multa, id]);
 
         res.status(200).send("Produto Entregue!!");
     } catch (err) {
