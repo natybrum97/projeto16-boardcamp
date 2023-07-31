@@ -137,9 +137,8 @@ export async function finalizarAlugueis(req, res) {
         console.log(rentDate)
 
         console.log(diferencaEmDias)
-        console.log(idExiste.rows[0].originalPrice)
 
-        const multa = diferencaEmDias * (parseInt(idExiste.rows[0].originalPrice)/100);
+        const multa = diferencaEmDias * (parseInt(idExiste.rows[0].originalPrice));
 
         console.log(multa)
 
