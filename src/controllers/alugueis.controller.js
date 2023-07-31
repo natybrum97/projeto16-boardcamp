@@ -80,6 +80,16 @@ export async function listarAlugueis(req, res) {
         values.push(gameId);
     }
 
+    if (order) {
+        query += ` ORDER BY ${order}`;
+      
+        if (desc === "true") {
+          query += ' DESC';
+        } else {
+          query += ' ASC';
+        }
+      }
+
     try {
         const listaAlugueis = await db.query(query, values);
 
